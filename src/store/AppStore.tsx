@@ -27,11 +27,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     requestPersist()
-    loadState().then((s) => {
-      setState(s)
-      loaded.current = true
-      setReady(true)
-    })
+    loadState()
+      .catch(() => EMPTY_STATE)
+      .then((s) => {
+        setState(s)
+        loaded.current = true
+        setReady(true)
+      })
   }, [])
 
   useEffect(() => {

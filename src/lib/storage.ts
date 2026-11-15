@@ -11,13 +11,20 @@ function safeLocalGet(): string | null {
   }
 }
 
+/** IndexedDB trên một số trình duyệt iOS (Chrome, Zalo...) có thể treo không trả lời -> giới hạn thời gian chờ. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([p, new Promise<undefined>((r) => setTimeout(() => r(undefined), ms))])
+}
+
+let idbBroken = false
+
 /** Đọc dữ liệu: ưu tiên IndexedDB, dự phòng localStorage. */
 export async function loadState(): Promise<AppState> {
   try {
-    const fromIdb = await get<AppState>(KEY)
+    const fromIdb = await withTimeout(get<AppState>(KEY), 1500)
     if (fromIdb) return normalize(fromIdb)
   } catch {
-    /* ignore */
+    idbBroken = true
   }
   const raw = safeLocalGet()
   if (raw) {
@@ -38,10 +45,11 @@ export async function saveState(state: AppState): Promise<void> {
   } catch {
     /* ignore */
   }
+  if (idbBroken) return
   try {
-    await set(KEY, state)
+    await withTimeout(set(KEY, state), 1500)
   } catch {
-    /* ignore */
+    idbBroken = true
   }
 }
 

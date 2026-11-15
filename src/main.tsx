@@ -4,13 +4,21 @@ import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App'
 import { AppStoreProvider } from './store/AppStore'
+import ErrorBoundary from './components/ErrorBoundary'
 
-registerSW({ immediate: true })
+// Chrome/Firefox trên iPhone không hỗ trợ service worker -> bỏ qua êm
+try {
+  if ('serviceWorker' in navigator) registerSW({ immediate: true })
+} catch {
+  /* ignore */
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppStoreProvider>
-      <App />
-    </AppStoreProvider>
+    <ErrorBoundary>
+      <AppStoreProvider>
+        <App />
+      </AppStoreProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )
